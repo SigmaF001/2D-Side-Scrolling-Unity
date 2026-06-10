@@ -1,6 +1,5 @@
 using UnityEngine;
 
-[RequireComponent(typeof(Collider2D))]
 public class TimeHopTrigger : MonoBehaviour
 {
     [Header("Settings")]
@@ -34,9 +33,9 @@ public class TimeHopTrigger : MonoBehaviour
 
     private void TryHop()
     {
-        if (Time.time - _lastHopTime < cooldown) return;
-        _lastHopTime = Time.time;
-        TimeManager.Instance?.AdvanceTime();
+        if (Time.time - _lastHopTime < cooldown) return; //เช็คคูลดาวน์
+        _lastHopTime = Time.time; //บันทึกเวลาที่กดล่าสุด
+        TimeManager.Instance?.AdvanceTime(); //เลื่อนเวลา
     }
 
     // Draw trigger gizmo in editor

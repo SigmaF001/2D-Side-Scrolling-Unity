@@ -5,7 +5,7 @@ using UnityEngine.UI;
 public class TransitionUI : MonoBehaviour
 {
     private static TransitionUI _instance;
-    private CanvasGroup _group;
+    [SerializeField] private CanvasGroup _group;
 
     private void Awake()
     {

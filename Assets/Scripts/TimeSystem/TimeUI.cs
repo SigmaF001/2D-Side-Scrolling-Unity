@@ -20,6 +20,15 @@ public class TimeUI : MonoBehaviour
             Refresh(TimeManager.Instance.CurrentTime);
         }
     }
+    
+    void Start()
+    {
+        if (TimeManager.Instance != null)
+        {
+            TimeManager.Instance.OnTimeChanged += Refresh;
+            Refresh(TimeManager.Instance.CurrentTime);
+        }
+    }
 
     private void OnDisable()
     {
