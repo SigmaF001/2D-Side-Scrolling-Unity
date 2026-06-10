@@ -1,28 +1,44 @@
 using UnityEngine;
+using TMPro;
 
 public class TimeHopTrigger : MonoBehaviour
 {
     [Header("Settings")]
-    [Tooltip("If true, each entry advances time. If false, requires pressing the interact key.")]
     [SerializeField] private bool autoHopOnEnter = true;
     [SerializeField] private KeyCode interactKey  = KeyCode.E;
 
-    [Header("Cooldown (prevent rapid re-triggers)")]
+    [Header("Cooldown")]
     [SerializeField] private float cooldown = 1f;
+
+    [Header("Hud")]
+    [SerializeField] private string interactPrompt = "Press E to rest";
+    [SerializeField] private TextMeshPro hintText;
 
     private bool _playerInside;
     private float _lastHopTime = -99f;
+
+    private void Awake()
+    {
+        if (hintText == null) return;
+        if (hintText != null) hintText.gameObject.SetActive(false);
+    }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (!other.CompareTag("Player")) return;
         _playerInside = true;
+        if (hintText != null) 
+        {
+            hintText.text = interactPrompt;
+            hintText.gameObject.SetActive(true);
+        }
         if (autoHopOnEnter) TryHop();
     }
 
     private void OnTriggerExit2D(Collider2D other)
     {
         if (other.CompareTag("Player")) _playerInside = false;
+        if (hintText != null) hintText.gameObject.SetActive(false);
     }
 
     private void Update()
