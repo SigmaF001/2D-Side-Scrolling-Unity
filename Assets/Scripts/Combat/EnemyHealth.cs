@@ -6,15 +6,15 @@ public class EnemyHealth : MonoBehaviour
     [Header("Stats")]
     [SerializeField] protected float maxHealth = 20f;
 
-    public float MaxHealth     { get; protected set; }
+    public float MaxHealth { get; protected set; }
     public float CurrentHealth { get; protected set; }
-    public bool  IsDead        => CurrentHealth <= 0f;
+    public bool  IsDead => CurrentHealth <= 0f;
 
     public event Action<EnemyHealth> OnDeath;
 
     protected virtual void Awake()
     {
-        MaxHealth     = maxHealth;
+        MaxHealth = maxHealth;
         CurrentHealth = maxHealth;
     }
 
@@ -27,7 +27,6 @@ public class EnemyHealth : MonoBehaviour
         if (IsDead) Die();
     }
 
-    /// <summary>Override for hit-flash, knockback, etc.</summary>
     protected virtual void OnDamaged(float amount) { }
 
     protected virtual void Die()
@@ -36,6 +35,5 @@ public class EnemyHealth : MonoBehaviour
         OnKilled();
     }
 
-    /// <summary>Override in sub-classes for drop logic, split logic, etc.</summary>
     protected virtual void OnKilled() => Destroy(gameObject);
 }

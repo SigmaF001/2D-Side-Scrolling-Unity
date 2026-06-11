@@ -11,6 +11,9 @@ public class PlayerHealth : MonoBehaviour
     [Header("Arcane Power")]
     [SerializeField] private float maxAP = 100f;
 
+    [Header("Respawn Settings")]
+    [SerializeField] private GameObject respawnPoint;
+
     public float MaxAP     { get; private set; }
     public float CurrentAP { get; private set; }
     public bool  IsDead    => CurrentAP <= 0f;
@@ -50,8 +53,20 @@ public class PlayerHealth : MonoBehaviour
 
     private void Die()
     {
-        Debug.Log("[Player] Died – resetting AP.");
+        Debug.Log("[Player] Died, resetting AP.");
         OnPlayerDied?.Invoke();
-        ResetAP();
+        // ResetAP();
+        GetComponent<Animator>()?.SetBool("Died", true);
+    }
+
+    public void RespawnAtCheckpoint()
+    {
+        if (respawnPoint != null)
+        {
+            GetComponent<Animator>()?.SetBool("Died", false);
+            transform.position = respawnPoint.transform.position;
+            Debug.Log("[Player] Respawned at checkpoint.");
+            ResetAP();
+        }
     }
 }

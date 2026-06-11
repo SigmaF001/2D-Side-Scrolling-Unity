@@ -47,5 +47,7 @@ public class PlayerCombat : MonoBehaviour
 
         Vector3 scale = projectile.transform.localScale;
         projectile.transform.localScale = new Vector3(isFacingRight ? Mathf.Abs(scale.x) : -Mathf.Abs(scale.x), scale.y, scale.z);
+
+        if (_health.CurrentAP <= 0f) { _health.TakeDamage(0); }
     }
 }
