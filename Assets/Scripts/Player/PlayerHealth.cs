@@ -14,9 +14,9 @@ public class PlayerHealth : MonoBehaviour
     [Header("Respawn Settings")]
     [SerializeField] private GameObject respawnPoint;
 
-    public float MaxAP     { get; private set; }
+    public float MaxAP { get; private set; }
     public float CurrentAP { get; private set; }
-    public bool  IsDead    => CurrentAP <= 0f;
+    public bool  IsDead => CurrentAP <= 0f;
 
     private void Awake()
     {

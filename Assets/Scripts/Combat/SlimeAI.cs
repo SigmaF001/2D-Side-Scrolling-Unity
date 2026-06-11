@@ -18,31 +18,46 @@ public class SlimeAI : MonoBehaviour
     [SerializeField] private float attackDamage = 5f;
     [SerializeField] private float attackCooldown = 1f;
 
+    [Header("Wander")]
+    [SerializeField] private float wanderSpeed = 1.2f;
+    [SerializeField] private float wanderMinWalkTime = 1f;
+    [SerializeField] private float wanderMaxWalkTime = 2.5f;
+    [SerializeField] private float wanderMinPauseTime = 0.8f;
+    [SerializeField] private float wanderMaxPauseTime = 2f;
+
     private Rigidbody2D _rb;
+    private Collider2D _collider;
     private EnemyHealth _health;
     private Animator _animator;
     private Transform _player;
 
     private float _nextAttackTime;
     private bool _isDying;
-
     private bool _attackTriggered;
 
-    private enum State { Idle, Chase, Attack }
+    private Vector2 _wanderDir;
+    private float _wanderTimer;
+    private bool _isWanderPausing = true;
+
+    private enum State { Idle, Wander, Chase, Attack, Hurt }
     private State _state = State.Idle;
 
     private static readonly int AnimIsMoving = Animator.StringToHash("isMoving");
     private static readonly int AnimAttack = Animator.StringToHash("Attack");
     private static readonly int AnimDied = Animator.StringToHash("Died");
+    private static readonly int AnimHurt = Animator.StringToHash("Hurt");
 
 #region Unity Lifecycle
 
     private void Awake()
     {
         _rb = GetComponent<Rigidbody2D>();
+        _collider = GetComponent<Collider2D>();
         _health = GetComponent<EnemyHealth>();
         _animator = GetComponent<Animator>();
+
         _health.OnDeath += OnSlimeDeath;
+        _health.OnHurt += OnSlimeHurt;
     }
 
     private void Start()
@@ -50,6 +65,9 @@ public class SlimeAI : MonoBehaviour
         var playerObj = GameObject.FindGameObjectWithTag("Player");
         if (playerObj) _player = playerObj.transform;
         else Debug.LogWarning("[SlimeAI] ไม่พบ Player — ตรวจสอบว่า Player มี Tag 'Player'");
+
+        _wanderTimer = Random.Range(wanderMinPauseTime, wanderMaxPauseTime);
+        _isWanderPausing = true;
     }
 
     private void FixedUpdate()
@@ -63,13 +81,18 @@ public class SlimeAI : MonoBehaviour
 
 #region State Machine
 
+    private Vector2 BodyCenter =>
+        _collider != null ? _collider.bounds.center : (Vector2)transform.position;
+
     private void UpdateState()
     {
-        float dist = Vector2.Distance(transform.position, _player.position);
+        if (_state == State.Hurt) return;
 
-        if (dist <= attackRange)         _state = State.Attack;
+        float dist = Vector2.Distance(BodyCenter, _player.position);
+
+        if (dist <= attackRange) _state = State.Attack;
         else if (dist <= detectionRange) _state = State.Chase;
-        else                             _state = State.Idle;
+        else _state = State.Idle;
     }
 
     private void ExecuteState()
@@ -77,12 +100,11 @@ public class SlimeAI : MonoBehaviour
         switch (_state)
         {
             case State.Idle:
-                _rb.linearVelocity = Vector2.Lerp(_rb.linearVelocity, Vector2.zero, 0.2f);
-                _animator?.SetBool(AnimIsMoving, false);
-                _attackTriggered = false;
+                ExecuteWander();
                 break;
 
             case State.Chase:
+                ResetWanderCycle(); // รีเซ็ตรอบ wander เมื่อออกจาก Idle
                 Vector2 dir = (_player.position - transform.position).normalized;
                 _rb.linearVelocity = new Vector2(dir.x * moveSpeed, _rb.linearVelocity.y);
                 FlipTowards(dir.x);
@@ -91,11 +113,11 @@ public class SlimeAI : MonoBehaviour
                 break;
 
             case State.Attack:
+                ResetWanderCycle();
                 _rb.linearVelocity = Vector2.zero;
                 _animator?.SetBool(AnimIsMoving, false);
 
-                bool cooldownReady = Time.time >= _nextAttackTime;
-                if (cooldownReady && !_attackTriggered)
+                if (Time.time >= _nextAttackTime && !_attackTriggered)
                 {
                     _animator?.SetTrigger(AnimAttack);
                     _attackTriggered = true;
@@ -103,7 +125,57 @@ public class SlimeAI : MonoBehaviour
 
                 TryAttack();
                 break;
+
+            case State.Hurt:
+                _rb.linearVelocity = Vector2.zero;
+                _animator?.SetBool(AnimIsMoving, false);
+                break;
         }
+    }
+
+    private void ExecuteWander()
+    {
+        _wanderTimer -= Time.fixedDeltaTime;
+
+        if (_wanderTimer <= 0f)
+            ToggleWanderPhase();
+
+        if (_isWanderPausing)
+        {
+            _rb.linearVelocity = Vector2.Lerp(_rb.linearVelocity, Vector2.zero, 0.25f);
+            _animator?.SetBool(AnimIsMoving, false);
+        }
+        else
+        {
+            _rb.linearVelocity = new Vector2(_wanderDir.x * wanderSpeed, _rb.linearVelocity.y);
+            FlipTowards(_wanderDir.x);
+            _animator?.SetBool(AnimIsMoving, true);
+        }
+
+        _attackTriggered = false;
+    }
+
+    private void ToggleWanderPhase()
+    {
+        _isWanderPausing = !_isWanderPausing;
+
+        if (_isWanderPausing)
+        {
+            _wanderTimer = Random.Range(wanderMinPauseTime, wanderMaxPauseTime);
+        }
+        else
+        {
+            float x = Random.value > 0.5f ? 1f : -1f;
+            _wanderDir   = new Vector2(x, 0f).normalized;
+            _wanderTimer = Random.Range(wanderMinWalkTime, wanderMaxWalkTime);
+        }
+    }
+
+    private void ResetWanderCycle()
+    {
+        if (_isWanderPausing) return; // ไม่ต้องทำอะไรถ้าอยู่ใน phase pause อยู่แล้ว
+        _isWanderPausing = true;
+        _wanderTimer = Random.Range(wanderMinPauseTime, wanderMaxPauseTime);
     }
 
     private void TryAttack()
@@ -113,7 +185,6 @@ public class SlimeAI : MonoBehaviour
         _nextAttackTime  = Time.time + attackCooldown;
         _attackTriggered = false;
 
-        // ใช้ singleton ก่อน ถ้าไม่มีค่อย GetComponent
         var ph = PlayerHealth.Instance ?? _player.GetComponent<PlayerHealth>();
         if (ph == null)
         {
@@ -122,6 +193,23 @@ public class SlimeAI : MonoBehaviour
         }
 
         ph.TakeDamage(attackDamage);
+    }
+
+
+    private void OnSlimeHurt(float _)
+    {
+        if (_isDying || _health.IsDead) return;
+
+        _state = State.Hurt;
+        _rb.linearVelocity = Vector2.zero;
+        _animator?.SetBool(AnimIsMoving, false);
+        _animator?.SetTrigger(AnimHurt);
+    }
+
+    public void ExitHurtState()
+    {
+        if (_state == State.Hurt)
+            _state = State.Idle;
     }
 
     private void FlipTowards(float dirX)
@@ -138,6 +226,7 @@ public class SlimeAI : MonoBehaviour
 #endregion
 
 #region Death & Split
+
     private void OnSlimeDeath(EnemyHealth _)
     {
         _isDying = true;
@@ -154,16 +243,20 @@ public class SlimeAI : MonoBehaviour
 
         _animator?.SetTrigger(AnimDied);
     }
+
 #endregion
 
 #region Gizmos
 
     private void OnDrawGizmosSelected()
     {
+        var col    = GetComponent<Collider2D>();
+        Vector3 center = col != null ? col.bounds.center : transform.position;
         Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, detectionRange);
+        Gizmos.DrawWireSphere(center, detectionRange);
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, attackRange);
+        Gizmos.DrawWireSphere(BodyCenter, attackRange);
     }
+
 #endregion
 }

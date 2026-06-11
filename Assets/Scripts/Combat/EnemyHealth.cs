@@ -8,9 +8,10 @@ public class EnemyHealth : MonoBehaviour
 
     public float MaxHealth { get; protected set; }
     public float CurrentHealth { get; protected set; }
-    public bool  IsDead => CurrentHealth <= 0f;
+    public bool IsDead => CurrentHealth <= 0f;
 
     public event Action<EnemyHealth> OnDeath;
+    public event Action<float> OnHurt;
 
     protected virtual void Awake()
     {
@@ -23,6 +24,7 @@ public class EnemyHealth : MonoBehaviour
         if (IsDead || amount <= 0f) return;
         CurrentHealth = Mathf.Max(0f, CurrentHealth - amount);
         Debug.Log($"[Enemy] {name}  HP: {CurrentHealth:F0}/{MaxHealth:F0}");
+        OnHurt?.Invoke(amount);
         OnDamaged(amount);
         if (IsDead) Die();
     }
@@ -34,6 +36,7 @@ public class EnemyHealth : MonoBehaviour
         OnDeath?.Invoke(this);
         OnKilled();
     }
+
 
     protected virtual void OnKilled() => Destroy(gameObject);
 }

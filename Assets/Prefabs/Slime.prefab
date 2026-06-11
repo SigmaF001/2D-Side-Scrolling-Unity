@@ -30,11 +30,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7878350319992209165, guid: e06822ca8c105b444b58c20222c4aa66, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -30.28
+      value: -4.62
       objectReference: {fileID: 0}
     - target: {fileID: 7878350319992209165, guid: e06822ca8c105b444b58c20222c4aa66, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -4.54
+      value: -4.17
       objectReference: {fileID: 0}
     - target: {fileID: 7878350319992209165, guid: e06822ca8c105b444b58c20222c4aa66, type: 3}
       propertyPath: m_LocalPosition.z
@@ -78,7 +78,7 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: -2253911629886400664, guid: e06822ca8c105b444b58c20222c4aa66, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 8001070227133236496}
+      addedObject: {fileID: 6295041372005830485}
     - targetCorrespondingSourceObject: {fileID: -2253911629886400664, guid: e06822ca8c105b444b58c20222c4aa66, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4634397249537239847}
@@ -94,7 +94,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: -2253911629886400664, guid: e06822ca8c105b444b58c20222c4aa66, type: 3}
   m_PrefabInstance: {fileID: 2184291041890790219}
   m_PrefabAsset: {fileID: 0}
---- !u!61 &8001070227133236496
+--- !u!61 &6295041372005830485
 BoxCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -193,10 +193,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlimeAI
   isMinislime: 0
-  miniSlimePrefab: {fileID: 8060266770383157525, guid: 7a085f2bbc7aed241b97c027f299b5cf, type: 3}
+  miniSlimePrefab: {fileID: 7672018158749085106, guid: 7a085f2bbc7aed241b97c027f299b5cf, type: 3}
   splitCount: 2
   moveSpeed: 2.5
   detectionRange: 6
-  attackRange: 0.6
+  attackRange: 1
   attackDamage: 5
-  attackCooldown: 1
+  attackCooldown: 1.5
