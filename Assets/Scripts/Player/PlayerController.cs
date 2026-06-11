@@ -2,10 +2,11 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class PlayerMovement : MonoBehaviour
+public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 5f;
+    public bool isFacingRight = true;
 
     [Header("Animation")]
     [SerializeField] private SpriteRenderer spriteRenderer;
@@ -25,6 +26,7 @@ public class PlayerMovement : MonoBehaviour
     private bool jumpPressed;
     private PlayerInput playerInput;
 
+#region Unity Lifecycle
     private void Awake()
     {
         playerInput = new PlayerInput();
@@ -47,7 +49,6 @@ public class PlayerMovement : MonoBehaviour
     {
         CheckGrounded();
         ReadInput();
-        FlipSprite(movementInput);
     }
 
     private void FixedUpdate()
@@ -60,7 +61,9 @@ public class PlayerMovement : MonoBehaviour
             jumpPressed = false;
         }
     }
+#endregion
 
+#region Input Handling
     private void ReadInput()
     {
         var kb = Keyboard.current;
@@ -78,10 +81,24 @@ public class PlayerMovement : MonoBehaviour
             animator.SetBool("isRunning", true);
         }
 
+        if (movementInput > 0f && !isFacingRight)
+        {
+            FlipSprite();
+        }
+        else if (movementInput < 0f && isFacingRight)
+        {
+            FlipSprite();
+        }
+
         if (playerInput.Player.Jump.WasPressedThisFrame())
             jumpPressed = true;
-    }
 
+        if (playerInput.Player.Attack.WasPressedThisFrame())
+            animator.SetTrigger("Attack");
+    }
+#endregion
+
+#region Movement
     private void Jump()
     {
         _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, jumpForce);
@@ -96,11 +113,12 @@ public class PlayerMovement : MonoBehaviour
         isGrounded = Physics2D.OverlapCircle(origin, groundCheckRadius, groundLayer);
     }
 
-    private void FlipSprite(float dirX)
+    private void FlipSprite()
     {
-        if (Mathf.Abs(dirX) < 0.01f) return;
-        if (spriteRenderer != null)
-            spriteRenderer.flipX = dirX < 0;
+        isFacingRight = !isFacingRight;
+        Vector3 scale = transform.localScale;
+        scale.x *= -1;
+        transform.localScale = scale;
     }
 
     public bool  IsGrounded => isGrounded;
@@ -113,4 +131,5 @@ public class PlayerMovement : MonoBehaviour
         Gizmos.color = isGrounded ? Color.green : Color.red;
         Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
     }
+#endregion
 }

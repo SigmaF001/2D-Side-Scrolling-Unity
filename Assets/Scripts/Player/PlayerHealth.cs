@@ -6,7 +6,7 @@ public class PlayerHealth : MonoBehaviour
     public static PlayerHealth Instance { get; private set; }
 
     public event Action<float, float> OnAPChanged;  // (current, max)
-    public event Action               OnPlayerDied;
+    public event Action OnPlayerDied;
 
     [Header("Arcane Power")]
     [SerializeField] private float maxAP = 100f;
@@ -19,8 +19,8 @@ public class PlayerHealth : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
-        MaxAP      = maxAP;
-        CurrentAP  = maxAP;
+        MaxAP = maxAP;
+        CurrentAP = maxAP;
     }
 
 
@@ -31,7 +31,7 @@ public class PlayerHealth : MonoBehaviour
         OnAPChanged?.Invoke(CurrentAP, MaxAP);
         Debug.Log($"[Player] AP: {CurrentAP:F0}/{MaxAP:F0}");
 
-        if (IsDead) Die();
+        if (IsDead) { Die(); }
     }
 
     public void Heal(float amount)
@@ -53,6 +53,5 @@ public class PlayerHealth : MonoBehaviour
         Debug.Log("[Player] Died – resetting AP.");
         OnPlayerDied?.Invoke();
         ResetAP();
-        // Optionally trigger a respawn / death animation here
     }
 }
