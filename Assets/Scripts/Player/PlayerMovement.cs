@@ -7,6 +7,10 @@ public class PlayerMovement : MonoBehaviour
     [Header("Movement")]
     [SerializeField] private float moveSpeed = 5f;
 
+    [Header("Animation")]
+    [SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] private Animator animator;
+
     [Header("Jump")]
     [SerializeField] private float jumpForce = 10f;
 
@@ -15,29 +19,40 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float     groundCheckRadius = 0.15f;
     [SerializeField] private LayerMask groundLayer;
 
-    // ── Runtime ──────────────────────────────────────────────
     private Rigidbody2D _rb;
-    private SpriteRenderer _sr;
     private bool isGrounded;
-    private float horizontalInput;
+    private float movementInput;
     private bool jumpPressed;
+    private PlayerInput playerInput;
 
     private void Awake()
     {
+        playerInput = new PlayerInput();
+        spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        animator = GetComponentInChildren<Animator>();
         _rb = GetComponent<Rigidbody2D>();
-        _sr = GetComponentInChildren<SpriteRenderer>();
+    }
+
+    private void OnEnable()
+    {
+        playerInput.Enable();
+    }
+
+    private void OnDisable()
+    {
+        playerInput.Disable();
     }
 
     private void Update()
     {
         CheckGrounded();
         ReadInput();
-        FlipSprite(horizontalInput);
+        FlipSprite(movementInput);
     }
 
     private void FixedUpdate()
     {
-        _rb.linearVelocity = new Vector2(horizontalInput * moveSpeed, _rb.linearVelocity.y);
+        _rb.linearVelocity = new Vector2(movementInput * moveSpeed, _rb.linearVelocity.y);
 
         if (jumpPressed && isGrounded)
         {
@@ -51,11 +66,19 @@ public class PlayerMovement : MonoBehaviour
         var kb = Keyboard.current;
         if (kb == null) return;
 
-        float left  = (kb.aKey.isPressed || kb.leftArrowKey.isPressed)  ? -1f : 0f;
-        float right = (kb.dKey.isPressed || kb.rightArrowKey.isPressed) ?  1f : 0f;
-        horizontalInput = left + right;
+        Vector2 vectorMove = playerInput.Player.Move.ReadValue<Vector2>();
+        movementInput = vectorMove.x;
 
-        if (kb.spaceKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame || kb.upArrowKey.wasPressedThisFrame)
+        if (movementInput == 0f)
+        {
+            animator.SetBool("isRunning", false);
+        }
+        else
+        {
+            animator.SetBool("isRunning", true);
+        }
+
+        if (playerInput.Player.Jump.WasPressedThisFrame())
             jumpPressed = true;
     }
 
@@ -76,13 +99,13 @@ public class PlayerMovement : MonoBehaviour
     private void FlipSprite(float dirX)
     {
         if (Mathf.Abs(dirX) < 0.01f) return;
-        if (_sr != null)
-                _sr.flipX = dirX < 0;
+        if (spriteRenderer != null)
+            spriteRenderer.flipX = dirX < 0;
     }
 
     public bool  IsGrounded => isGrounded;
-    public float HorizontalInput => horizontalInput;
-    public bool  IsMoving => Mathf.Abs(horizontalInput) > 0.01f;
+    public float HorizontalInput => movementInput;
+    public bool IsMoving => Mathf.Abs(movementInput) > 0.01f;
 
     private void OnDrawGizmosSelected()
     {

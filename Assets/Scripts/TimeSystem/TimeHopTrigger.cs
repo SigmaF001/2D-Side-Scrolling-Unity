@@ -3,10 +3,6 @@ using TMPro;
 
 public class TimeHopTrigger : MonoBehaviour
 {
-    [Header("Settings")]
-    [SerializeField] private bool autoHopOnEnter = true;
-    [SerializeField] private KeyCode interactKey  = KeyCode.E;
-
     [Header("Cooldown")]
     [SerializeField] private float cooldown = 1f;
 
@@ -14,7 +10,6 @@ public class TimeHopTrigger : MonoBehaviour
     [SerializeField] private string interactPrompt = "Press E to rest";
     [SerializeField] private TextMeshPro hintText;
 
-    private bool _playerInside;
     private float _lastHopTime = -99f;
 
     private void Awake()
@@ -26,25 +21,24 @@ public class TimeHopTrigger : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (!other.CompareTag("Player")) return;
-        _playerInside = true;
         if (hintText != null) 
         {
             hintText.text = interactPrompt;
             hintText.gameObject.SetActive(true);
         }
-        if (autoHopOnEnter) TryHop();
+        if (InputManager.Instance == null)
+        {
+            Debug.LogError("[TimeHopTrigger] InputManager.Instance is null!");
+            return;
+        }
+        InputManager.Instance.OnInteractPressed += TryHop;
     }
 
     private void OnTriggerExit2D(Collider2D other)
     {
-        if (other.CompareTag("Player")) _playerInside = false;
+        if (!other.CompareTag("Player")) return;
+        InputManager.Instance.OnInteractPressed -= TryHop;
         if (hintText != null) hintText.gameObject.SetActive(false);
-    }
-
-    private void Update()
-    {
-        if (!autoHopOnEnter && _playerInside && Input.GetKeyDown(interactKey))
-            TryHop();
     }
 
     private void TryHop()
@@ -54,7 +48,6 @@ public class TimeHopTrigger : MonoBehaviour
         TimeManager.Instance?.AdvanceTime(); //เลื่อนเวลา
     }
 
-    // Draw trigger gizmo in editor
     private void OnDrawGizmos()
     {
         Gizmos.color = new Color(0.2f, 0.8f, 1f, 0.3f);
